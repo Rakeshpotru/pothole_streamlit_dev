@@ -98,25 +98,24 @@ def generate_roadmap(image, detections, threshold=5):
 st.title('Pothole Detection')
 current_dir = os.path.dirname(__file__)
 # Model selection
-model_version = st.selectbox('Choose your model:', ('yolov8n', 'yolov8m'))
+model_version = st.selectbox('Choose your model:', ('yolov8-1', 'yolov8-2'))
 model_paths = {
-    'yolov8n': current_dir + '//content//runs//detect//train5//weights//best.pt',
-    'yolov8m': current_dir + '//content//runs//detect//train5//best.pt'
+    'yolov8-1': current_dir + '//content//runs//detect//train5//best.pt',
+    'yolov8-2': current_dir + '//content//runs//detect//train5//weights//best.pt'
 }
 model_path = model_paths[model_version]
 model = YOLO(model_path)
 
-mobile_model_name = st.selectbox('Choose your mobile:', ('iphone 14','iPhone 12', 'Pixel 6a', 'V2031','iQOO Neo6', 'motorola edge 40 neo'))
+mobile_model_name = st.selectbox('Choose your mobile:', ('Iphone 14', 'Pixel 6A', 'One Plus','iQOO Neo6', 'motorola edge 40 neo'))
 model_sensor_size =  {
         "Iphone 14":{ "sensor_width_mm":7, "sensor_height_mm":5, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":7.5,"Distance_to_object":2},
         "iQOO Neo6":{ "sensor_width_mm":7.4, "sensor_height_mm":5.5, "sensor_width_px":9280, "sensor_height_px":6944, "focal_length":5,"Distance_to_object":2},
         "Pixel 6A":{ "sensor_width_mm":7.68, "sensor_height_mm":5.76, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":4.38,"Distance_to_object":2},
-        "One Plus":{ "sensor_width_mm":7.4, "sensor_height_mm":5.5, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":5.59,"Distance_to_object":2},
+        "One Plus":{ "sensor_width_mm":7.4, "sensor_height_mm":5.5, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":5.6,"Distance_to_object":2},
         "motorola edge 40 neo":{"sensor_width_mm":8, "sensor_height_mm":6, "sensor_width_px":8160, "sensor_height_px":6120, "focal_length":6,"Distance_to_object":2}
 #     }
     }
 selected_sensor_data = model_sensor_size.get(mobile_model_name, {})
-
 focal_length = st.text_input(
     label="Focal Length in mm",
     value=str(selected_sensor_data.get("focal_length", "")),
@@ -127,7 +126,7 @@ focal_length = st.text_input(
 
 distance_to_object_m = st.text_input(
     label="Distance in meters",
-    value=str(selected_sensor_data.get("Distance_to_object", "")), # units in m
+    value='2', # units in m
     max_chars=6,
     key="distance_to_object",
     type="default",
@@ -191,7 +190,7 @@ if uploaded_file is not None:
                         if detections:
                             result_image = result.orig_img
                             annotated_image = Image.fromarray(result_image)
-                            annotated_image = draw_detections(annotated_image, detections)
+                            annotated_image = draw_detections(annotated_image, detections,selected_sensor_data)
                             roadmap_image, road_blocked = generate_roadmap(annotated_image, detections, threshold=5)
                             st.image(roadmap_image, caption='Processed Frame', use_column_width=True)
                             if road_blocked:
