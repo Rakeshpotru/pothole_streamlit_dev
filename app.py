@@ -61,7 +61,7 @@ def calculate_object_real_width(image, det, sensor_size):
 
 def draw_detections(image, detections,selected_sensor_data):
     draw = ImageDraw.Draw(image)
-    font = ImageFont.load_default(56)
+    font = ImageFont.load_default(22)
     
     for det in detections:
         # st.success(f"focal_length {str(focal_length)} ")
