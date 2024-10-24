@@ -18,7 +18,7 @@ def save_uploaded_file(uploaded_file):
     with Image.open(uploaded_file) as img:
         width, height = img.size 
 
-    
+
     upload_dir = "uploads"
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
@@ -36,8 +36,17 @@ def calculate_object_real_width(image, det, sensor_size):
     sensor_height_mm = sensor_size['sensor_height_mm']
     sensor_width_px = sensor_size['sensor_width_px']
     sensor_height_px = sensor_size['sensor_height_px']
-    focal_len = focal_length
-    # st.success(f"focal_length-2 {focal_len} ")
+    focal_len = float(focal_length)
+    if 3 < focal_len < 4: #if focal length is between 3, 4
+        mean_focal_length = focal_len
+    elif 4 < focal_len < 5: #if focal length is between 4,5
+        mean_focal_length = 1
+    elif 5 < focal_len < 6:  #if focal length is between 5,6
+        mean_focal_length = 1.34
+    elif 6 < focal_len < 7: #if focal length is between 6,7
+        mean_focal_length = 1.8
+    else:
+        mean_focal_length = focal_len
     
     image_width = image_heigth = 0
     width, height = image.size
@@ -47,38 +56,30 @@ def calculate_object_real_width(image, det, sensor_size):
     Object_width_pixels, Object_height_pixels = (x2 - x1, y2 - y1) if width > height else (y2 - y1, x2 - x1)
 
     distance_to_object_mm = int(distance_to_object_m) * 1000 # Distance conversion
-    
     # Calculate dimensions on sensor
-    
     Object_width_on_sensor_mms = (sensor_width_mm * Object_width_pixels) / sensor_width_px
-    Object_width_mm =((distance_to_object_mm * Object_width_on_sensor_mms)/float(focal_length))
+    Object_width_mm =((distance_to_object_mm * Object_width_on_sensor_mms)/float(mean_focal_length))
 
     # Calculate real dimensions
     Object_height_on_sensor_mms = (sensor_height_mm * Object_height_pixels) / sensor_height_px
-    Object_height_mm = ((distance_to_object_mm * Object_height_on_sensor_mms) / float(focal_length))
+    Object_height_mm = ((distance_to_object_mm * Object_height_on_sensor_mms) / float(mean_focal_length))
     
     return Object_width_mm, Object_height_mm
 
 def draw_detections(image, detections,selected_sensor_data):
     draw = ImageDraw.Draw(image)
-    font = ImageFont.load_default(26)
+    font = ImageFont.load_default()
     
     for det in detections:
-        # st.success(f"focal_length {str(focal_length)} ")
-        
         real_world_width_mm, real_world_length_mm = calculate_object_real_width(image, det,selected_sensor_data)
         real_world_length_cm = int(real_world_length_mm / 10)
         real_world_width_cm = int(real_world_width_mm / 10)
-
-        # st.success(f"real_world_width_cm {str(real_world_width_cm)} ")
-        # st.success(f"real_world_length_cm {str(real_world_length_cm)} ")
-
         area_cm2 = real_world_length_cm * real_world_width_cm
 
         x1, y1, x2, y2 = map(int, det[:4])
         # label = f'{int(cls_id)} {conf:.2f} | Area: {area_m2:.2f} m²'
         label = f'Area: {area_cm2} Sq Cm'
-        # st.success(f"Area    --    {area_cm2} Sq Cm ")
+        
         draw.rectangle([x1, y1, x2, y2], outline=(255, 0, 0), width=5)
         text_width = font.getlength(label)
         text_height = font.getbbox(label)[3]  # Get the height from the bounding box
@@ -106,13 +107,18 @@ model_paths = {
 model_path = model_paths[model_version]
 model = YOLO(model_path)
 
-mobile_model_name = st.selectbox('Choose your mobile:', ('Iphone 14', 'Pixel 6A', 'One Plus','iQOO Neo6', 'motorola edge 40 neo'))
+mobile_model_name = st.selectbox('Choose your mobile:', ('Pixel 6A', 'One Plus','iQOO Neo6', 'Motorola edge 40','Pixel 7 Pro','Vivo','Redmi Note 5 Pro'))
 model_sensor_size =  {
-        "Iphone 14":{ "sensor_width_mm":7, "sensor_height_mm":5, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":7.5,"Distance_to_object":2},
-        "iQOO Neo6":{ "sensor_width_mm":7.4, "sensor_height_mm":5.5, "sensor_width_px":9280, "sensor_height_px":6944, "focal_length":5,"Distance_to_object":2},
-        "Pixel 6A":{ "sensor_width_mm":7.68, "sensor_height_mm":5.76, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":4.38,"Distance_to_object":2},
-        "One Plus":{ "sensor_width_mm":7.4, "sensor_height_mm":5.5, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":5.6,"Distance_to_object":2},
-        "motorola edge 40 neo":{"sensor_width_mm":8, "sensor_height_mm":6, "sensor_width_px":8160, "sensor_height_px":6120, "focal_length":6,"Distance_to_object":2}
+        # "Iphone 14":{ "sensor_width_mm":7, "sensor_height_mm":5, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":7.5,"Distance_to_object":2},
+        "iQOO Neo6":{ "sensor_width_mm":7.32, "sensor_height_mm":5.5, "sensor_width_px":4576, "sensor_height_px":3432, "focal_length":5.42,"Distance_to_object":2},
+        "Pixel 6A":{ "sensor_width_mm":5.64, "sensor_height_mm":4.23, "sensor_width_px":4032, "sensor_height_px":3024, "focal_length":4.38,"Distance_to_object":2},
+        "One Plus":{ "sensor_width_mm":8.19, "sensor_height_mm":6.14, "sensor_width_px":4096, "sensor_height_px":3072, "focal_length":5.59,"Distance_to_object":2},
+        "Motorola edge 40":{"sensor_width_mm":8.25, "sensor_height_mm":6.19, "sensor_width_px":4096, "sensor_height_px":3072, "focal_length":5.55,"Distance_to_object":2},
+        "Pixel 7 Pro":{"sensor_width_mm":9.79, "sensor_height_mm":7.37, "sensor_width_px":4080, "sensor_height_px":3072, "focal_length":6.80,"Distance_to_object":2},
+        "Vivo":{"sensor_width_mm":6.45, "sensor_height_mm":4.83, "sensor_width_px":4608, "sensor_height_px":3456, "focal_length":4.84,"Distance_to_object":2},
+        "Redmi Note 5 Pro":{"sensor_width_mm":6.17, "sensor_height_mm":4.39, "sensor_width_px":4000, "sensor_height_px":3000, "focal_length":3.80,"Distance_to_object":2},
+        
+        
 #     }
     }
 selected_sensor_data = model_sensor_size.get(mobile_model_name, {})
